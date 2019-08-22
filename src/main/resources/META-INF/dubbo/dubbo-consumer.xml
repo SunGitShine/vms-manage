@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans.xsd
+	http://code.alibabatech.com/schema/dubbo
+	http://code.alibabatech.com/schema/dubbo/dubbo.xsd">
+	
+	<dubbo:application name="vms-manage"/>
+	
+	<dubbo:registry protocol="zookeeper" address="${dubbo.registry.address}" />
+      
+    <dubbo:consumer check="false"  timeout="10000" retries="0" version="${dubbo.reference.vms.version}"/>
+ 
+    <!-- 用户中心 -->
+    <dubbo:reference id="authorityService" interface="com.juma.auth.authority.service.AuthorityService" version="${dubbo.reference.auth.version}"/>
+    <dubbo:reference id="operationLogService" interface="com.juma.log.service.OperationLogService" version="${dubbo.reference.auth.version}"/>
+    <dubbo:reference id="tenantService" interface="com.juma.auth.tenant.service.TenantService" version="${dubbo.reference.auth.version}"/>
+    <dubbo:reference id="confParamService" interface="com.juma.conf.service.ConfParamService" version="${dubbo.reference.auth.version}"/>
+    <dubbo:reference id="distributedFileStorageService" interface="com.juma.common.storage.service.DistributedFileStorageService" version="${dubbo.reference.auth.version}"/>
+ 
+    <dubbo:reference id="vendorService" interface="com.juma.vms.vendor.service.VendorService"/>
+    <dubbo:reference id="vendorTenantService" interface="com.juma.vms.vendor.service.VendorTenantService"/>
+    <dubbo:reference id="vendorVehicleService" interface="com.juma.vms.vendor.service.VendorVehicleService"/>
+    <dubbo:reference id="operateLogService" interface="com.juma.vms.operateLog.service.OperateLogService"/>
+    <dubbo:reference id="amsCommonService" interface="com.juma.vms.tool.service.AmsCommonService"/>
+    <dubbo:reference id="crmCommonService" interface="com.juma.vms.tool.service.CrmCommonService"/>
+    <dubbo:reference id="mqService" interface="com.juma.vms.mq.service.MqService"/>
+    <dubbo:reference id="driverService" interface="com.juma.vms.driver.service.DriverService"/>
+    <dubbo:reference id="driverTenantService" interface="com.juma.vms.driver.service.DriverTenantService"/>
+    <dubbo:reference id="truckService" interface="com.juma.vms.truck.service.TruckService"/>
+    <dubbo:reference id="businessAreaCommonService" interface="com.juma.vms.tool.service.BusinessAreaCommonService"/>
+    <dubbo:reference id="transportReceiveService" interface="com.juma.vms.transport.service.TransportReceiveService"/>
+    <dubbo:reference id="transportSendService" interface="com.juma.vms.transport.service.TransportSendService"/>
+    <dubbo:reference id="transportTruckReturnService" interface="com.juma.vms.transport.service.TransportTruckReturnService"/>
+    <dubbo:reference id="transportService" interface="com.juma.vms.transport.service.TransportService"/>
+    <dubbo:reference id="vendorDriverService" interface="com.juma.vms.vendor.service.VendorDriverService"/>
+    <dubbo:reference id="vendorTruckService" interface="com.juma.vms.vendor.service.VendorTruckService"/>
+    <dubbo:reference id="capacityPoolService" interface="com.juma.vms.transport.service.CapacityPoolService"/>
+    <dubbo:reference id="ocrCommonService" interface="com.juma.vms.tool.service.OcrCommonService"/>
+    <dubbo:reference id="authCommonService" interface="com.juma.vms.tool.service.AuthCommonService"/>
+    <dubbo:reference id="messageService" interface="com.juma.vms.tool.service.MessageService"/>
+    <dubbo:reference id="mdcCommonService" interface="com.juma.vms.tool.service.MdcCommonService"/>
+    
+    <dubbo:reference id="idGeneratorService" interface="com.juma.vms.tool.service.IdGeneratorService"/>
+    
+    <!-- 初始化数据 -->
+    <dubbo:reference id="initService" interface="com.juma.vms.transport.service.InitService" timeout="2500000"/>
+</beans>

@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xmlns:context="http://www.springframework.org/schema/context"
+	   xmlns:aop="http://www.springframework.org/schema/aop"
+	   xmlns:apollo="http://www.ctrip.com/schema/apollo"
+	   xsi:schemaLocation="http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context 
+	    http://www.springframework.org/schema/context/spring-context-2.5.xsd
+	    http://www.springframework.org/schema/aop
+	    http://www.springframework.org/schema/aop/spring-aop.xsd
+        http://www.ctrip.com/schema/apollo http://www.ctrip.com/schema/apollo.xsd">
+	<aop:aspectj-autoproxy/>
+    <!-- 这个是最简单的配置形式，一般应用用这种形式就可以了，用来指示Apollo注入application namespace的配置到Spring环境中 -->
+    <apollo:config/>
+	        
+	<!-- 使用annotation 自动注册bean, 并保证@Required、@Autowired的属性被注入 -->  
+    <context:component-scan base-package="com.juma.vms"/>
+    
+    <bean id="taskExecutor" class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
+		  <property name="corePoolSize" value="10" />
+		  <property name="keepAliveSeconds" value="300" />
+	</bean>
+
+    <bean id="propertyConfigurer"
+          class="org.springframework.context.support.PropertySourcesPlaceholderConfigurer">
+        <property name="locations">
+            <list>
+				<value>classpath:application.properties</value>
+            </list>
+        </property>
+    </bean>
+
+	<bean id="enterExecutionTimeProfilerAop" class="com.giants.analyse.aop.EnterExecutionTimeProfilerAop" >
+		<property name="showArguments" value="false"/>
+	</bean>
+
+	<bean id="webApplicationTemplateEngine" class="com.giants.decorator.springframework.engine.WebApplicationTemplateEngine">
+		<property name="basePath" value="template/"/>
+		<property name="configLocation" value="decorator-template.xml"/>
+		<property name="htmlTemplateEngine">
+			<bean class="com.giants.decorator.html.engine.file.HtmlFileTemplateEngine"/>
+		</property>
+	</bean>
+
+	<bean id="messageSource" class="org.springframework.context.support.ResourceBundleMessageSource">
+		<property name="basenames">
+			<list>
+				<value>vms-manage-resources</value>
+                <value>vms-gateway-resources</value>
+			</list>
+		</property>
+	</bean>
+	
+	<bean id="controllerValidationAop" class="com.giants.web.springmvc.aop.ControllerValidationAop">
+		<property name="validator">
+			<ref bean="validator"/>
+		</property>
+		<property name="errorMessageKey" value="errors.validation.failure"/>
+		<property name="dontThrowExceptionsReturnTypes">
+			<list>
+				<value>org.springframework.web.servlet.ModelAndView</value>
+			</list>
+		</property>
+	</bean>
+	
+	<bean id="validatorFactory"
+		class="org.springmodules.validation.commons.DefaultValidatorFactory">		
+		<property name="validationConfigLocations">
+			<list>
+				<value>classpath*:/META-INF/validator-rules.xml</value>
+				<value>classpath*:/META-INF/validation-*.xml</value>
+			</list>
+		</property>
+	</bean>
+
+	<bean id="validator"
+		class="org.springmodules.validation.commons.DefaultBeanValidator">
+		<property name="useFullyQualifiedClassName" value="false"/>
+		<property name="validatorFactory" ref="validatorFactory" />
+	</bean>
+			
+	<bean id="redisClient" class="com.giants.cache.redis.SpringDataRedisClient">
+		<property name="redisTemplate">
+			<bean class="org.springframework.data.redis.core.RedisTemplate">
+				<property name="connectionFactory">
+					<bean class="org.springframework.data.redis.connection.jedis.JedisConnectionFactory">
+						<property name="hostName" value="${redis.ip}"/>
+						<property name="port" value="${redis.port}"/>
+						<property name="password" value="${redis.password}"/>
+					</bean>
+				</property>
+			</bean>
+		</property>
+	</bean>
+		
+	<bean id="giantsSessionRedis" class="com.giants.cache.redis.impl.GiantsSessionRedisImpl">
+		<property name="cacheKeyPrefix" value="VMS"/>
+		<property name="redisClient" ref="redisClient" />
+	</bean>
+	
+	<bean class="com.giants.common.SpringContextHelper"/>
+
+	<bean id="controllerCheckPermissionsAop" class="com.juma.auth.authority.aop.EmployeeControllerCheckPermissionsAop">
+		<property name="authKey" value="VMS_MANAGE"/>
+		<property name="authorityService" ref="authorityService"/>
+		<property name="operationLogService" ref="operationLogService"/>
+		<property name="authExcludeList">
+			<list>
+				<value>com.juma.vms.manage.web.controller.UploadController.upload</value>
+				<value>com.juma.vms.manage.web.controller.QueryConditionCommonsController.loadLogicAndSelfAreaName</value>
+				<value>com.juma.vms.manage.operateLog.controller.OperateLogController.search</value>
+				<value>com.juma.vms.manage.vendor.controller.VendorController.getVendorByIdCardNo</value>
+				<value>com.juma.vms.manage.truck.controller.TruckController.findTruckBy</value>
+				<!-- 运力工作流 -->
+				<value>com.juma.vms.manage.transport.controller.TransportSendController.findDetail</value>
+				<value>com.juma.vms.manage.transport.controller.TransportSendController.doWorkFlowTask</value>
+				<value>com.juma.vms.manage.transport.controller.TransportSendController.task</value>
+				<value>com.juma.vms.manage.transport.controller.TransportController.findPropertyValues</value>
+
+				<!-- 运力退回 -->
+				<value>com.juma.vms.manage.transport.controller.TransportTruckRefundController.task</value>
+				<value>com.juma.vms.manage.transport.controller.TransportTruckRefundController.doWorkFlowTask</value>
+				<value>com.juma.vms.manage.transport.controller.TransportTruckRefundController.findDetailByRefundId</value>
+				<value>com.juma.vms.manage.transport.controller.TransportTruckRefundController.findSuperCompany</value>
+
+				<value>com.juma.vms.manage.web.controller.QueryConditionCommonsController.childrenBusinessArea</value>
+				<value>com.juma.vms.manage.web.controller.QueryConditionCommonsController.childrenDepartment</value>
+				<value>com.juma.vms.manage.transport.controller.TransportReceiveController.customers</value>
+			</list>
+		</property>
+		<property name="argClassExcludeList">
+			<list>
+				<value>org.springframework.validation.BindingResult</value>
+				<value>org.springframework.ui.ModelMap</value>
+				<value>javax.servlet.http.HttpSession</value>
+				<value>javax.servlet.ServletRequest</value>
+				<value>javax.servlet.ServletResponse</value>
+				<value>javax.servlet.http.HttpServletRequest</value>
+				<value>javax.servlet.http.HttpServletResponse</value>
+				<value>org.springframework.web.multipart.MultipartFile</value>
+			</list>
+		</property>
+	</bean>
+</beans>
